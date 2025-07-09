@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Avansat | Solicitudes de Certificados</title>
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background-color: #f4f6f8;
+        margin: 0;
+        padding: 0;
+      }
+      header {
+        background-color: #2c3e50;
+        color: white;
+        text-align: center;
+        padding: 20px;
+      }
+      .container {
+        max-width: 800px;
+        margin: 30px auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      h2 {
+        color: #2c3e50;
+        margin-top: 30px;
+      }
+      label {
+        display: block;
+        margin-top: 10px;
+      }
+      input,
+      select,
+      button {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+      button {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        margin-top: 15px;
+        cursor: pointer;
+      }
+      .hidden {
+        display: none;
+      }
+      .status-box,
+      .download-box {
+        background-color: #eaf6ff;
+        border-left: 4px solid #3498db;
+        padding: 15px;
+        margin-top: 20px;
+      }
+      .radicado {
+        font-weight: bold;
+        color: #2c3e50;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Avansat Básico</h1>
+      <p>Módulo de Gestión de Solicitudes de Certificados</p>
+    </header>
+
+    <div class="container" id="loginSection">
+      <h2>Acceso al Módulo</h2>
+      <label for="rol">Selecciona tu perfil:</label>
+      <select id="rol" onchange="mostrarFormularioAcceso()">
+        <option value="">-- Seleccionar --</option>
+        <option value="interno">Interno (Colaborador)</option>
+        <option value="externo">Externo (Usuario)</option>
+      </select>
+
+      <div id="formInterno" class="hidden">
+        <h3>Acceso Interno</h3>
+        <label>Usuario corporativo:</label>
+        <input type="text" placeholder="usuario@empresa.com" />
+        <label>Contraseña:</label>
+        <input type="password" placeholder="••••••••" />
+        <button onclick="iniciarSesion()">Ingresar</button>
+      </div>
+
+      <div id="formExterno" class="hidden">
+        <h3>Acceso Externo</h3>
+        <label>Correo electrónico:</label>
+        <input type="email" placeholder="correo@dominio.com" />
+        <label>Código temporal:</label>
+        <input type="text" placeholder="Ej: 384920" />
+        <button onclick="iniciarSesion()">Ingresar</button>
+      </div>
+    </div>
+
+    <div class="container hidden" id="formularioSection">
+      <h2>Formulario de Solicitud</h2>
+      <form id="solicitudForm">
+        <label for="nombre">Nombre completo:</label>
+        <input type="text" id="nombre" required />
+
+        <label for="documento">Número de documento:</label>
+        <input type="text" id="documento" required />
+
+        <label for="correo">Correo electrónico:</label>
+        <input type="email" id="correo" required />
+
+        <label for="password">Contraseña:</label>
+        <input type="password" id="password" required />
+
+        <label for="certificado">Tipo de certificado:</label>
+        <select id="certificado" required>
+          <option value="retenciones">Retenciones</option>
+          <option value="facturacion">Facturación</option>
+          <option value="pago">Pago del servicio</option>
+          <option value="pazysalvo">Paz y salvo</option>
+          <option value="afiliacion">Afiliación</option>
+          <option value="estado">Estado del servicio</option>
+        </select>
+
+        <button type="submit">Enviar solicitud</button>
+      </form>
+
+      <div id="estadoSolicitud" class="status-box hidden">
+        <p>📄 Tu solicitud ha sido enviada correctamente.</p>
+        <p>
+          Estado actual:
+          <strong id="estadoActual">En revisión por Finanzas</strong>
+        </p>
+        <p>
+          Tu número de radicado es:
+          <span class="radicado" id="radicadoGenerado"></span>
+        </p>
+        <button onclick="aprobarSolicitud()">Simular aprobación</button>
+      </div>
+
+      <div id="descargaCertificado" class="download-box hidden">
+        <p>✅ Tu certificado ha sido aprobado.</p>
+        <a href="certificado-demo.pdf" download>Descargar certificado PDF</a>
+      </div>
+    </div>
+
+    <script>
+      const loginSection = document.getElementById("loginSection");
+      const formInterno = document.getElementById("formInterno");
+      const formExterno = document.getElementById("formExterno");
+      const formularioSection = document.getElementById("formularioSection");
+      const form = document.getElementById("solicitudForm");
+      const estadoBox = document.getElementById("estadoSolicitud");
+      const descargaBox = document.getElementById("descargaCertificado");
+      const radicadoSpan = document.getElementById("radicadoGenerado");
+
+      function mostrarFormularioAcceso() {
+        const rol = document.getElementById("rol").value;
+        formInterno.classList.add("hidden");
+        formExterno.classList.add("hidden");
+
+        if (rol === "interno") formInterno.classList.remove("hidden");
+        else if (rol === "externo") formExterno.classList.remove("hidden");
+      }
+
+      function iniciarSesion() {
+        loginSection.classList.add("hidden");
+        formularioSection.classList.remove("hidden");
+      }
+
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const radicado = generarRadicado();
+        radicadoSpan.textContent = radicado;
+
+        estadoBox.classList.remove("hidden");
+        form.classList.add("hidden");
+      });
+
+      function aprobarSolicitud() {
+        document.getElementById("estadoActual").textContent = "Aprobado";
+        descargaBox.classList.remove("hidden");
+      }
+
+      function generarRadicado() {
+        const prefix = "AVS-";
+        const randomNum = Math.floor(100000 + Math.random() * 900000);
+        const year = new Date().getFullYear();
+        return `${prefix}${year}-${randomNum}`;
+      }
+    </script>
+  </body>
+</html>
